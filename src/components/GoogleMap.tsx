@@ -34,14 +34,16 @@ export const GoogleMap: React.FC<GoogleMapProps> = ({
     console.log('Center coordinates:', center);
 
     if (!mapRef.current) {
-      console.error('Map container not found');
-      setError('Map container not found');
+      console.error('Map container not found, retrying...');
+      // Retry after a short delay
+      setTimeout(initializeMap, 100);
       return;
     }
 
-    if (!window.google) {
+    if (!window.google || !window.google.maps) {
       console.error('Google Maps API not loaded');
       setError('Google Maps API not loaded. Please check your API key.');
+      setIsLoading(false);
       return;
     }
 
@@ -66,18 +68,36 @@ export const GoogleMap: React.FC<GoogleMapProps> = ({
     }
   };
 
-  // Wait for Google Maps API to load
+  // Wait for both Google Maps API and DOM element to be ready
   useEffect(() => {
-    const checkGoogleMaps = () => {
-      if (window.google && window.google.maps) {
+    let retryCount = 0;
+    const maxRetries = 50; // 5 seconds max wait time
+
+    const checkAndInitialize = () => {
+      console.log(`Checking readiness... attempt ${retryCount + 1}`);
+      
+      if (retryCount >= maxRetries) {
+        console.error('Max retries reached');
+        setError('Failed to load Google Maps after multiple attempts');
+        setIsLoading(false);
+        return;
+      }
+
+      if (window.google && window.google.maps && mapRef.current) {
+        console.log('Both Google Maps API and DOM element are ready');
         initializeMap();
       } else {
-        console.log('Waiting for Google Maps API...');
-        setTimeout(checkGoogleMaps, 100);
+        console.log('Still waiting...', {
+          googleMaps: !!window.google?.maps,
+          domElement: !!mapRef.current
+        });
+        retryCount++;
+        setTimeout(checkAndInitialize, 100);
       }
     };
 
-    checkGoogleMaps();
+    // Start checking
+    checkAndInitialize();
   }, []);
 
   // Update map center when it changes
