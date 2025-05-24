@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -87,6 +86,7 @@ const Index = () => {
   const [showForm, setShowForm] = useState(false);
   const [editingProfile, setEditingProfile] = useState<Profile | null>(null);
   const [selectedProfileForDetails, setSelectedProfileForDetails] = useState<Profile | null>(null);
+  const [showAdminPanel, setShowAdminPanel] = useState(false);
   const { toast } = useToast();
 
   // Get all unique locations for filtering
@@ -193,7 +193,11 @@ const Index = () => {
             </div>
             <div className="flex items-center space-x-3">
               <span className="text-sm text-gray-600">{profiles.length} profiles</span>
-              <Button variant="ghost" size="sm">
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => setShowAdminPanel(true)}
+              >
                 <Settings className="h-4 w-4 mr-1" />
                 Admin
               </Button>
@@ -298,9 +302,45 @@ const Index = () => {
         )}
       </div>
 
-      {/* Map Modal */}
-      {showMap && selectedProfile && (
+      {/* Admin Panel Modal */}
+      {showAdminPanel && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-md w-full">
+            <div className="flex justify-between items-center p-4 border-b">
+              <h2 className="text-xl font-semibold">Admin Panel</h2>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowAdminPanel(false)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            <div className="p-4">
+              <div className="space-y-4">
+                <Button
+                  onClick={() => {
+                    setShowForm(true);
+                    setShowAdminPanel(false);
+                  }}
+                  className="w-full bg-purple-600 hover:bg-purple-700"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add New Profile
+                </Button>
+                <div className="text-sm text-gray-600">
+                  <p>Total Profiles: {profiles.length}</p>
+                  <p>Locations: {allLocations.length}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Map Modal - Higher z-index */}
+      {showMap && selectedProfile && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[60]">
           <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden">
             <div className="flex justify-between items-center p-4 border-b">
               <div>
@@ -379,7 +419,7 @@ const Index = () => {
         </div>
       )}
 
-      {/* Profile Details Modal - Updated Design */}
+      {/* Profile Details Modal */}
       {selectedProfileForDetails && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto shadow-xl">
@@ -474,7 +514,10 @@ const Index = () => {
               
               {/* Action Button */}
               <Button
-                onClick={() => handleShowMap(selectedProfileForDetails)}
+                onClick={() => {
+                  setSelectedProfileForDetails(null);
+                  handleShowMap(selectedProfileForDetails);
+                }}
                 className="w-full bg-purple-600 hover:bg-purple-700 text-white"
               >
                 <MapPin className="h-4 w-4 mr-2" />
