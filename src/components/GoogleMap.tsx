@@ -8,6 +8,12 @@ interface GoogleMapProps {
   className?: string;
 }
 
+declare global {
+  interface Window {
+    google: any;
+  }
+}
+
 export const GoogleMap: React.FC<GoogleMapProps> = ({
   center,
   markers = [],
@@ -15,8 +21,8 @@ export const GoogleMap: React.FC<GoogleMapProps> = ({
   className = "w-full h-full"
 }) => {
   const mapRef = useRef<HTMLDivElement>(null);
-  const mapInstanceRef = useRef<google.maps.Map | null>(null);
-  const markersRef = useRef<google.maps.Marker[]>([]);
+  const mapInstanceRef = useRef<any>(null);
+  const markersRef = useRef<any[]>([]);
 
   useEffect(() => {
     if (!mapRef.current || !window.google) return;

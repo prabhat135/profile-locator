@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Search, MapPin, Plus, Edit, Trash2, X } from 'lucide-react';
+import { Search, MapPin, Plus, Edit, Trash2, X, Settings, Eye } from 'lucide-react';
 import { GoogleMap } from '@/components/GoogleMap';
 import { ProfileForm } from '@/components/ProfileForm';
 import { useToast } from "@/hooks/use-toast";
@@ -20,64 +20,85 @@ interface Profile {
   phone: string;
   interests: string[];
   coordinates?: { lat: number; lng: number };
+  location?: string;
+  joinDate?: string;
 }
 
 const Index = () => {
   const [profiles, setProfiles] = useState<Profile[]>([
     {
       id: '1',
-      name: 'John Doe',
-      photo: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
-      description: 'Software engineer passionate about web development and AI.',
-      address: '1600 Amphitheatre Parkway, Mountain View, CA 94043',
-      email: 'john.doe@example.com',
+      name: 'Sarah Johnson',
+      photo: 'https://images.unsplash.com/photo-1494790108755-2616b612b8e5?w=150&h=150&fit=crop&crop=face',
+      description: 'Creative designer passionate about user experience and sustainable design.',
+      address: '654 Sunset Boulevard, Los Angeles, CA 90028',
+      email: 'sarah.johnson@example.com',
       phone: '+1 (555) 123-4567',
-      interests: ['Programming', 'AI', 'Photography'],
-      coordinates: { lat: 37.4220656, lng: -122.0840897 }
+      interests: ['Design', 'Sustainability'],
+      coordinates: { lat: 34.0522, lng: -118.2437 },
+      location: 'San Francisco',
+      joinDate: '15/01/2023'
     },
     {
       id: '2',
-      name: 'Jane Smith',
-      photo: 'https://images.unsplash.com/photo-1494790108755-2616b612b8e5?w=150&h=150&fit=crop&crop=face',
-      description: 'UX designer with a love for creating intuitive user experiences.',
+      name: 'Michael Chen',
+      photo: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
+      description: 'Full-stack developer with expertise in React, Node.js, and cloud architecture.',
       address: '1 Hacker Way, Menlo Park, CA 94025',
-      email: 'jane.smith@example.com',
+      email: 'michael.chen@example.com',
       phone: '+1 (555) 987-6543',
-      interests: ['Design', 'Art', 'Travel'],
-      coordinates: { lat: 37.4845938, lng: -122.1479938 }
+      interests: ['Programming', 'AI/ML'],
+      coordinates: { lat: 37.4845938, lng: -122.1479938 },
+      location: 'New York',
+      joinDate: '20/02/2023'
     },
     {
       id: '3',
-      name: 'Mike Johnson',
-      photo: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
-      description: 'Data scientist exploring the world of machine learning.',
+      name: 'Emily Rodriguez',
+      photo: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face',
+      description: 'Marketing strategist specializing in digital transformation and brand development.',
       address: '410 Terry Ave N, Seattle, WA 98109',
-      email: 'mike.johnson@example.com',
+      email: 'emily.rodriguez@example.com',
       phone: '+1 (555) 456-7890',
-      interests: ['Data Science', 'Machine Learning', 'Basketball'],
-      coordinates: { lat: 47.6205099, lng: -122.3492774 }
+      interests: ['Marketing', 'Travel'],
+      coordinates: { lat: 47.6205099, lng: -122.3492774 },
+      location: 'Austin',
+      joinDate: '10/03/2023'
+    },
+    {
+      id: '4',
+      name: 'David Thompson',
+      photo: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
+      description: 'Data scientist and AI researcher working on machine learning applications.',
+      address: '1600 Amphitheatre Parkway, Mountain View, CA 94043',
+      email: 'david.thompson@example.com',
+      phone: '+1 (555) 321-9876',
+      interests: ['Data Science', 'Research'],
+      coordinates: { lat: 37.4220656, lng: -122.0840897 },
+      location: 'Seattle',
+      joinDate: '05/04/2023'
     }
   ]);
 
   const [selectedProfile, setSelectedProfile] = useState<Profile | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedInterest, setSelectedInterest] = useState('');
+  const [selectedLocation, setSelectedLocation] = useState('All Locations');
   const [showMap, setShowMap] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingProfile, setEditingProfile] = useState<Profile | null>(null);
   const [selectedProfileForDetails, setSelectedProfileForDetails] = useState<Profile | null>(null);
   const { toast } = useToast();
 
-  // Get all unique interests for filtering
-  const allInterests = Array.from(new Set(profiles.flatMap(p => p.interests)));
+  // Get all unique locations for filtering
+  const allLocations = Array.from(new Set(profiles.map(p => p.location).filter(Boolean)));
 
-  // Filter profiles based on search and interest
+  // Filter profiles based on search and location
   const filteredProfiles = profiles.filter(profile => {
     const matchesSearch = profile.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          profile.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          profile.address.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesInterest = !selectedInterest || profile.interests.includes(selectedInterest);
-    return matchesSearch && matchesInterest;
+    const matchesLocation = selectedLocation === 'All Locations' || profile.location === selectedLocation;
+    return matchesSearch && matchesLocation;
   });
 
   const handleShowMap = (profile: Profile) => {
@@ -88,7 +109,8 @@ const Index = () => {
   const handleAddProfile = (profileData: Omit<Profile, 'id'>) => {
     const newProfile: Profile = {
       ...profileData,
-      id: Date.now().toString()
+      id: Date.now().toString(),
+      joinDate: new Date().toLocaleDateString('en-GB')
     };
     
     // Geocode the address to get coordinates
@@ -111,7 +133,8 @@ const Index = () => {
       const updatedProfile: Profile = {
         ...profileData,
         id: editingProfile.id,
-        coordinates: coordinates || editingProfile.coordinates
+        coordinates: coordinates || editingProfile.coordinates,
+        joinDate: editingProfile.joinDate
       };
       
       setProfiles(prev => prev.map(p => p.id === editingProfile.id ? updatedProfile : p));
@@ -139,7 +162,7 @@ const Index = () => {
       }
 
       const geocoder = new window.google.maps.Geocoder();
-      geocoder.geocode({ address }, (results, status) => {
+      geocoder.geocode({ address }, (results: any, status: string) => {
         if (status === 'OK' && results && results[0]) {
           const location = results[0].geometry.location;
           resolve({
@@ -159,11 +182,22 @@ const Index = () => {
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex justify-between items-center">
-            <h1 className="text-3xl font-bold text-gray-900">Profile Explorer</h1>
-            <Button onClick={() => setShowForm(true)} className="flex items-center gap-2">
-              <Plus className="h-4 w-4" />
-              Add Profile
-            </Button>
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center">
+                <MapPin className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">ProfileMapper</h1>
+                <p className="text-sm text-gray-500">Explore profiles and locations</p>
+              </div>
+            </div>
+            <div className="flex items-center space-x-3">
+              <span className="text-sm text-gray-600">{profiles.length} profiles</span>
+              <Button variant="ghost" size="sm">
+                <Settings className="h-4 w-4 mr-1" />
+                Admin
+              </Button>
+            </div>
           </div>
         </div>
       </header>
@@ -181,79 +215,75 @@ const Index = () => {
             />
           </div>
           <select
-            value={selectedInterest}
-            onChange={(e) => setSelectedInterest(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            value={selectedLocation}
+            onChange={(e) => setSelectedLocation(e.target.value)}
+            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
           >
-            <option value="">All Interests</option>
-            {allInterests.map(interest => (
-              <option key={interest} value={interest}>{interest}</option>
+            <option value="All Locations">All Locations</option>
+            {allLocations.map(location => (
+              <option key={location} value={location}>{location}</option>
             ))}
           </select>
         </div>
 
+        <h2 className="text-xl font-semibold text-gray-900 mb-4">All Profiles</h2>
+
         {/* Profiles Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {filteredProfiles.map((profile) => (
-            <Card key={profile.id} className="hover:shadow-lg transition-shadow cursor-pointer">
-              <CardHeader className="pb-2">
-                <div className="flex justify-between items-start">
-                  <div className="flex items-center space-x-3">
-                    <Avatar className="h-12 w-12">
-                      <AvatarImage src={profile.photo} alt={profile.name} />
-                      <AvatarFallback>{profile.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <CardTitle className="text-lg">{profile.name}</CardTitle>
-                      <p className="text-sm text-gray-500 flex items-center">
-                        <MapPin className="h-3 w-3 mr-1" />
-                        {profile.address.split(',')[0]}
-                      </p>
+            <Card key={profile.id} className="hover:shadow-lg transition-shadow">
+              <CardHeader className="pb-3">
+                <div className="flex items-center space-x-3 mb-2">
+                  <Avatar className="h-12 w-12">
+                    <AvatarImage src={profile.photo} alt={profile.name} />
+                    <AvatarFallback>{profile.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1">
+                    <CardTitle className="text-base">{profile.name}</CardTitle>
+                    <div className="flex items-center text-sm text-gray-500">
+                      <MapPin className="h-3 w-3 mr-1" />
+                      {profile.location}
                     </div>
-                  </div>
-                  <div className="flex space-x-1">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setEditingProfile(profile)}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDeleteProfile(profile.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    {profile.joinDate && (
+                      <div className="flex items-center text-xs text-gray-400">
+                        <span className="w-2 h-2 bg-green-500 rounded-full mr-1"></span>
+                        Joined {profile.joinDate}
+                      </div>
+                    )}
                   </div>
                 </div>
               </CardHeader>
-              <CardContent>
-                <p className="text-gray-600 mb-3 text-sm">{profile.description}</p>
-                <div className="flex flex-wrap gap-1 mb-3">
-                  {profile.interests.map((interest, index) => (
-                    <Badge key={index} variant="secondary" className="text-xs">
+              <CardContent className="pt-0">
+                <p className="text-gray-600 mb-3 text-sm line-clamp-2">{profile.description}</p>
+                <div className="flex flex-wrap gap-1 mb-4">
+                  {profile.interests.slice(0, 2).map((interest, index) => (
+                    <Badge key={index} variant="secondary" className="text-xs bg-purple-100 text-purple-700">
                       {interest}
                     </Badge>
                   ))}
+                  {profile.interests.length > 2 && (
+                    <Badge variant="secondary" className="text-xs">
+                      +{profile.interests.length - 2}
+                    </Badge>
+                  )}
                 </div>
                 <div className="flex space-x-2">
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => setSelectedProfileForDetails(profile)}
-                    className="flex-1"
+                    className="flex-1 text-xs"
                   >
-                    View Details
+                    <Eye className="h-3 w-3 mr-1" />
+                    Details
                   </Button>
                   <Button
                     size="sm"
                     onClick={() => handleShowMap(profile)}
-                    className="flex-1 flex items-center justify-center gap-1"
+                    className="flex-1 text-xs bg-purple-600 hover:bg-purple-700"
                   >
-                    <MapPin className="h-3 w-3" />
-                    Show Map
+                    <MapPin className="h-3 w-3 mr-1" />
+                    Map
                   </Button>
                 </div>
               </CardContent>
@@ -273,19 +303,43 @@ const Index = () => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden">
             <div className="flex justify-between items-center p-4 border-b">
-              <h2 className="text-xl font-semibold">{selectedProfile.name}'s Location</h2>
+              <div>
+                <h2 className="text-xl font-semibold flex items-center">
+                  <MapPin className="h-5 w-5 text-purple-600 mr-2" />
+                  Location Map
+                </h2>
+                <p className="text-sm text-gray-500">Viewing location for {selectedProfile.name}</p>
+              </div>
               <Button variant="ghost" size="sm" onClick={() => setShowMap(false)}>
                 <X className="h-4 w-4" />
               </Button>
             </div>
-            <div className="p-4">
-              <p className="text-gray-600 mb-4">{selectedProfile.address}</p>
-              <div className="h-96">
-                <GoogleMap
-                  center={selectedProfile.coordinates || { lat: 0, lng: 0 }}
-                  markers={selectedProfile.coordinates ? [selectedProfile.coordinates] : []}
-                  zoom={15}
-                />
+            <div className="p-6">
+              <div className="mb-4 p-4 bg-gray-50 rounded-lg">
+                <div className="flex items-center justify-center mb-4">
+                  <MapPin className="h-8 w-8 text-gray-400" />
+                </div>
+                <h3 className="text-lg font-semibold text-center">{selectedProfile.name}</h3>
+                <p className="text-center text-gray-600 mb-2">{selectedProfile.address}</p>
+                {selectedProfile.coordinates && (
+                  <p className="text-center text-sm text-gray-500">
+                    Coordinates: {selectedProfile.coordinates.lat.toFixed(4)}, {selectedProfile.coordinates.lng.toFixed(4)}
+                  </p>
+                )}
+              </div>
+              <div className="h-96 bg-gray-100 rounded-lg">
+                {selectedProfile.coordinates ? (
+                  <GoogleMap
+                    center={selectedProfile.coordinates}
+                    markers={[selectedProfile.coordinates]}
+                    zoom={15}
+                    className="w-full h-full rounded-lg"
+                  />
+                ) : (
+                  <div className="flex items-center justify-center h-full">
+                    <p className="text-gray-500">Location not available</p>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -350,6 +404,10 @@ const Index = () => {
                 <div>
                   <h3 className="text-2xl font-bold">{selectedProfileForDetails.name}</h3>
                   <p className="text-gray-600">{selectedProfileForDetails.description}</p>
+                  <div className="flex items-center text-sm text-gray-500 mt-1">
+                    <span className="w-2 h-2 bg-green-500 rounded-full mr-1"></span>
+                    Joined {selectedProfileForDetails.joinDate}
+                  </div>
                 </div>
               </div>
               
@@ -368,7 +426,7 @@ const Index = () => {
                   <h4 className="font-semibold text-gray-900 mb-2">Interests</h4>
                   <div className="flex flex-wrap gap-2">
                     {selectedProfileForDetails.interests.map((interest, index) => (
-                      <Badge key={index} variant="secondary">
+                      <Badge key={index} variant="secondary" className="bg-purple-100 text-purple-700">
                         {interest}
                       </Badge>
                     ))}
@@ -379,7 +437,7 @@ const Index = () => {
               <div className="mt-6 flex space-x-3">
                 <Button
                   onClick={() => handleShowMap(selectedProfileForDetails)}
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700"
                 >
                   <MapPin className="h-4 w-4" />
                   View on Map
