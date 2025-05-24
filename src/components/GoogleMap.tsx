@@ -68,36 +68,34 @@ export const GoogleMap: React.FC<GoogleMapProps> = ({
     }
   };
 
-  // Wait for Google Maps API to be ready
+  // Initialize map when component mounts and is visible
   useEffect(() => {
-    const waitForGoogleMaps = () => {
+    console.log('GoogleMap useEffect triggered');
+    
+    const initializeWhenReady = () => {
+      // Check if Google Maps API is loaded
       if (!window.google || !window.google.maps) {
-        console.log('Waiting for Google Maps API...');
-        setTimeout(waitForGoogleMaps, 100);
+        console.log('Google Maps API not ready, retrying...');
+        setTimeout(initializeWhenReady, 100);
         return;
       }
-      console.log('Google Maps API is ready');
-      
-      // Once Google Maps is ready, wait a bit more for the DOM to be fully rendered
-      setTimeout(() => {
-        if (mapRef.current) {
-          initializeMap();
-        } else {
-          console.log('DOM element still not ready, trying again...');
-          setTimeout(() => {
-            if (mapRef.current) {
-              initializeMap();
-            } else {
-              setError('Unable to find map container');
-              setIsLoading(false);
-            }
-          }, 500);
-        }
-      }, 300);
+
+      // Check if DOM element is available
+      if (!mapRef.current) {
+        console.log('Map container not ready, retrying...');
+        setTimeout(initializeWhenReady, 100);
+        return;
+      }
+
+      console.log('Everything ready, initializing map...');
+      initializeMap();
     };
 
-    waitForGoogleMaps();
-  }, []);
+    // Start checking after a small delay to ensure modal is rendered
+    const timeoutId = setTimeout(initializeWhenReady, 100);
+
+    return () => clearTimeout(timeoutId);
+  }, []); // Only run once when component mounts
 
   // Update map center when it changes
   useEffect(() => {
