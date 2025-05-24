@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Search, MapPin, Plus, Edit, Trash2, X, Settings, Eye } from 'lucide-react';
+import { Search, MapPin, Plus, Edit, Trash2, X, Settings, Eye, Mail, Phone } from 'lucide-react';
 import { GoogleMap } from '@/components/GoogleMap';
 import { ProfileForm } from '@/components/ProfileForm';
 import { useToast } from "@/hooks/use-toast";
@@ -379,12 +379,12 @@ const Index = () => {
         </div>
       )}
 
-      {/* Profile Details Modal */}
+      {/* Profile Details Modal - Updated Design */}
       {selectedProfileForDetails && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center p-4 border-b">
-              <h2 className="text-xl font-semibold">Profile Details</h2>
+          <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto shadow-xl">
+            <div className="flex justify-between items-center p-4 border-b bg-gray-50">
+              <h2 className="text-lg font-semibold text-gray-900">Profile Details</h2>
               <Button
                 variant="ghost"
                 size="sm"
@@ -393,65 +393,93 @@ const Index = () => {
                 <X className="h-4 w-4" />
               </Button>
             </div>
+            
             <div className="p-6">
-              <div className="flex items-center space-x-4 mb-6">
-                <Avatar className="h-20 w-20">
+              {/* Profile Header */}
+              <div className="flex items-start space-x-4 mb-6">
+                <Avatar className="h-16 w-16">
                   <AvatarImage src={selectedProfileForDetails.photo} alt={selectedProfileForDetails.name} />
                   <AvatarFallback className="text-lg">
                     {selectedProfileForDetails.name.split(' ').map(n => n[0]).join('')}
                   </AvatarFallback>
                 </Avatar>
-                <div>
-                  <h3 className="text-2xl font-bold">{selectedProfileForDetails.name}</h3>
-                  <p className="text-gray-600">{selectedProfileForDetails.description}</p>
+                <div className="flex-1">
+                  <h3 className="text-xl font-bold text-gray-900">{selectedProfileForDetails.name}</h3>
                   <div className="flex items-center text-sm text-gray-500 mt-1">
-                    <span className="w-2 h-2 bg-green-500 rounded-full mr-1"></span>
-                    Joined {selectedProfileForDetails.joinDate}
+                    <MapPin className="h-3 w-3 mr-1" />
+                    {selectedProfileForDetails.location}
+                  </div>
+                  <div className="flex items-center mt-2">
+                    <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+                    <span className="text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded">Active</span>
                   </div>
                 </div>
               </div>
               
-              <div className="space-y-4">
-                <div>
-                  <h4 className="font-semibold text-gray-900 mb-2">Contact Information</h4>
-                  <p className="text-gray-600">Email: {selectedProfileForDetails.email}</p>
-                  <p className="text-gray-600">Phone: {selectedProfileForDetails.phone}</p>
-                  <p className="text-gray-600 flex items-start">
-                    <MapPin className="h-4 w-4 mr-1 mt-1 flex-shrink-0" />
-                    {selectedProfileForDetails.address}
-                  </p>
-                </div>
-                
-                <div>
-                  <h4 className="font-semibold text-gray-900 mb-2">Interests</h4>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedProfileForDetails.interests.map((interest, index) => (
-                      <Badge key={index} variant="secondary" className="bg-purple-100 text-purple-700">
-                        {interest}
-                      </Badge>
-                    ))}
+              {/* About Section */}
+              <div className="mb-6">
+                <h4 className="font-semibold text-gray-900 mb-2">About</h4>
+                <p className="text-gray-600 text-sm leading-relaxed">{selectedProfileForDetails.description}</p>
+              </div>
+              
+              {/* Contact Information */}
+              <div className="mb-6">
+                <h4 className="font-semibold text-gray-900 mb-3">Contact Information</h4>
+                <div className="space-y-3">
+                  <div className="flex items-center text-sm">
+                    <Mail className="h-4 w-4 text-purple-600 mr-3" />
+                    <span className="text-purple-600">{selectedProfileForDetails.email}</span>
+                  </div>
+                  <div className="flex items-center text-sm">
+                    <Phone className="h-4 w-4 text-purple-600 mr-3" />
+                    <span className="text-purple-600">{selectedProfileForDetails.phone}</span>
                   </div>
                 </div>
               </div>
               
-              <div className="mt-6 flex space-x-3">
-                <Button
-                  onClick={() => handleShowMap(selectedProfileForDetails)}
-                  className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700"
-                >
-                  <MapPin className="h-4 w-4" />
-                  View on Map
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setSelectedProfileForDetails(null);
-                    setEditingProfile(selectedProfileForDetails);
-                  }}
-                >
-                  Edit Profile
-                </Button>
+              {/* Interests */}
+              <div className="mb-6">
+                <h4 className="font-semibold text-gray-900 mb-3">Interests</h4>
+                <div className="flex flex-wrap gap-2">
+                  {selectedProfileForDetails.interests.map((interest, index) => (
+                    <Badge key={index} className="bg-purple-600 text-white text-xs px-3 py-1">
+                      {interest}
+                    </Badge>
+                  ))}
+                </div>
               </div>
+              
+              {/* Location */}
+              <div className="mb-6">
+                <h4 className="font-semibold text-gray-900 mb-3">Location</h4>
+                <div className="text-sm text-gray-600">
+                  <div className="flex items-start">
+                    <MapPin className="h-4 w-4 text-gray-400 mr-2 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p>{selectedProfileForDetails.address}</p>
+                      {selectedProfileForDetails.coordinates && (
+                        <p className="text-xs text-gray-500 mt-1">
+                          Coordinates: {selectedProfileForDetails.coordinates.lat.toFixed(4)}, {selectedProfileForDetails.coordinates.lng.toFixed(4)}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Join Date */}
+              <div className="mb-6 p-3 bg-gray-50 rounded-lg">
+                <p className="text-sm text-gray-600">Joined on {selectedProfileForDetails.joinDate}</p>
+              </div>
+              
+              {/* Action Button */}
+              <Button
+                onClick={() => handleShowMap(selectedProfileForDetails)}
+                className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+              >
+                <MapPin className="h-4 w-4 mr-2" />
+                View on Map
+              </Button>
             </div>
           </div>
         </div>
