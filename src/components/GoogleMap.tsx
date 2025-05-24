@@ -25,29 +25,34 @@ export const GoogleMap: React.FC<GoogleMapProps> = ({
   const markersRef = useRef<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const initializationAttempted = useRef(false);
 
   // Function to initialize the map
   const initializeMap = () => {
-    console.log('Initializing Google Maps...');
+    console.log('Attempting to initialize Google Maps...');
     console.log('Google Maps API available:', !!window.google);
     console.log('Map ref available:', !!mapRef.current);
-    console.log('Center coordinates:', center);
+    console.log('Map ref element in DOM:', mapRef.current && document.contains(mapRef.current));
 
     if (!mapRef.current) {
-      console.error('Map container not found');
-      setError('Map container not found');
-      setIsLoading(false);
-      return;
+      console.error('Map container ref not found');
+      return false;
+    }
+
+    if (!document.contains(mapRef.current)) {
+      console.error('Map container not in DOM yet');
+      return false;
     }
 
     if (!window.google || !window.google.maps) {
       console.error('Google Maps API not loaded');
       setError('Google Maps API not loaded. Please check your API key.');
       setIsLoading(false);
-      return;
+      return false;
     }
 
     try {
+      console.log('Creating map instance...');
       // Initialize map
       mapInstanceRef.current = new window.google.maps.Map(mapRef.current, {
         center,
@@ -61,40 +66,70 @@ export const GoogleMap: React.FC<GoogleMapProps> = ({
       console.log('Map initialized successfully');
       setIsLoading(false);
       setError(null);
+      return true;
     } catch (err) {
       console.error('Error initializing map:', err);
       setError('Failed to initialize map');
       setIsLoading(false);
+      return false;
     }
   };
 
-  // Initialize map when component mounts and is visible
+  // Initialize map when component mounts
   useEffect(() => {
     console.log('GoogleMap useEffect triggered');
     
-    const initializeWhenReady = () => {
+    if (initializationAttempted.current) {
+      console.log('Initialization already attempted, skipping...');
+      return;
+    }
+
+    let attemptCount = 0;
+    const maxAttempts = 50; // Limit attempts to prevent infinite loops
+    
+    const attemptInitialization = () => {
+      attemptCount++;
+      console.log(`Initialization attempt ${attemptCount}/${maxAttempts}`);
+      
+      if (attemptCount > maxAttempts) {
+        console.error('Max initialization attempts reached');
+        setError('Map failed to load after multiple attempts');
+        setIsLoading(false);
+        return;
+      }
+
       // Check if Google Maps API is loaded
       if (!window.google || !window.google.maps) {
-        console.log('Google Maps API not ready, retrying...');
-        setTimeout(initializeWhenReady, 100);
+        console.log('Google Maps API not ready, retrying in 200ms...');
+        setTimeout(attemptInitialization, 200);
         return;
       }
 
-      // Check if DOM element is available
-      if (!mapRef.current) {
-        console.log('Map container not ready, retrying...');
-        setTimeout(initializeWhenReady, 100);
+      // Check if DOM element is available and in the document
+      if (!mapRef.current || !document.contains(mapRef.current)) {
+        console.log('Map container not ready, retrying in 200ms...');
+        setTimeout(attemptInitialization, 200);
         return;
       }
 
-      console.log('Everything ready, initializing map...');
-      initializeMap();
+      console.log('All conditions met, initializing map...');
+      initializationAttempted.current = true;
+      const success = initializeMap();
+      
+      if (!success) {
+        console.log('Initialization failed, retrying...');
+        initializationAttempted.current = false;
+        setTimeout(attemptInitialization, 500);
+      }
     };
 
-    // Start checking after a small delay to ensure modal is rendered
-    const timeoutId = setTimeout(initializeWhenReady, 100);
+    // Start attempts after a longer delay to ensure modal is fully rendered
+    const timeoutId = setTimeout(attemptInitialization, 500);
 
-    return () => clearTimeout(timeoutId);
+    return () => {
+      clearTimeout(timeoutId);
+      initializationAttempted.current = false;
+    };
   }, []); // Only run once when component mounts
 
   // Update map center when it changes
