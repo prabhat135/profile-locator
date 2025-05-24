@@ -27,19 +27,77 @@ export const GoogleMap: React.FC<GoogleMapProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Function to check if map container is available
+  const waitForContainer = (): Promise<boolean> => {
+    return new Promise((resolve) => {
+      let attempts = 0;
+      const maxAttempts = 50; // Increased attempts
+      
+      const checkContainer = () => {
+        attempts++;
+        console.log(`Checking map container availability - attempt ${attempts}/${maxAttempts}`);
+        
+        if (mapRef.current) {
+          console.log('Map container is now available');
+          resolve(true);
+          return;
+        }
+        
+        if (attempts >= maxAttempts) {
+          console.error('Map container not available after maximum attempts');
+          resolve(false);
+          return;
+        }
+        
+        setTimeout(checkContainer, 100); // Check every 100ms
+      };
+      
+      checkContainer();
+    });
+  };
+
+  // Function to check for Google Maps API availability
+  const waitForGoogleAPI = (): Promise<boolean> => {
+    return new Promise((resolve) => {
+      let attempts = 0;
+      const maxAttempts = 30;
+      
+      const checkAPI = () => {
+        attempts++;
+        console.log(`Checking Google Maps API availability - attempt ${attempts}/${maxAttempts}`);
+        
+        if (window.google && window.google.maps) {
+          console.log('Google Maps API is available');
+          resolve(true);
+          return;
+        }
+        
+        if (attempts >= maxAttempts) {
+          console.error('Google Maps API failed to load after maximum attempts');
+          resolve(false);
+          return;
+        }
+        
+        setTimeout(checkAPI, 200);
+      };
+      
+      checkAPI();
+    });
+  };
+
   // Function to initialize the map
   const initializeMap = () => {
     console.log('Attempting to initialize Google Maps...');
     
     if (!mapRef.current) {
-      console.error('Map container ref not found');
+      console.error('Map container ref not found during initialization');
       setError('Map container not available');
       setIsLoading(false);
       return false;
     }
 
     if (!window.google || !window.google.maps) {
-      console.error('Google Maps API not loaded');
+      console.error('Google Maps API not loaded during initialization');
       setError('Google Maps API failed to load. Please check your internet connection and API key.');
       setIsLoading(false);
       return false;
@@ -69,44 +127,22 @@ export const GoogleMap: React.FC<GoogleMapProps> = ({
     }
   };
 
-  // Check for Google Maps API availability
-  const checkGoogleMapsAPI = () => {
-    return new Promise<boolean>((resolve) => {
-      let attempts = 0;
-      const maxAttempts = 30;
-      
-      const checkAPI = () => {
-        attempts++;
-        console.log(`Checking Google Maps API availability - attempt ${attempts}/${maxAttempts}`);
-        
-        if (window.google && window.google.maps) {
-          console.log('Google Maps API is available');
-          resolve(true);
-          return;
-        }
-        
-        if (attempts >= maxAttempts) {
-          console.error('Google Maps API failed to load after maximum attempts');
-          resolve(false);
-          return;
-        }
-        
-        setTimeout(checkAPI, 200);
-      };
-      
-      checkAPI();
-    });
-  };
-
   // Initialize map when component mounts
   useEffect(() => {
     console.log('GoogleMap useEffect triggered');
     
     const initMap = async () => {
-      // Wait for a short delay to ensure modal is rendered
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Wait for container to be available first
+      const containerAvailable = await waitForContainer();
       
-      const apiAvailable = await checkGoogleMapsAPI();
+      if (!containerAvailable) {
+        setError('Map container failed to load. Please try refreshing the page.');
+        setIsLoading(false);
+        return;
+      }
+      
+      // Then wait for Google Maps API
+      const apiAvailable = await waitForGoogleAPI();
       
       if (!apiAvailable) {
         setError('Google Maps API failed to load. Please check your API key and internet connection.');
@@ -114,10 +150,10 @@ export const GoogleMap: React.FC<GoogleMapProps> = ({
         return;
       }
       
-      // Additional delay to ensure DOM is ready
+      // Small additional delay to ensure everything is ready
       setTimeout(() => {
         initializeMap();
-      }, 200);
+      }, 100);
     };
 
     initMap();
