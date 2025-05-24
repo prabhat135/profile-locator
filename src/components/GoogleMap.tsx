@@ -34,9 +34,9 @@ export const GoogleMap: React.FC<GoogleMapProps> = ({
     console.log('Center coordinates:', center);
 
     if (!mapRef.current) {
-      console.error('Map container not found, retrying...');
-      // Retry after a short delay
-      setTimeout(initializeMap, 100);
+      console.error('Map container not found');
+      setError('Map container not found');
+      setIsLoading(false);
       return;
     }
 
@@ -70,34 +70,29 @@ export const GoogleMap: React.FC<GoogleMapProps> = ({
 
   // Wait for both Google Maps API and DOM element to be ready
   useEffect(() => {
-    let retryCount = 0;
-    const maxRetries = 50; // 5 seconds max wait time
-
     const checkAndInitialize = () => {
-      console.log(`Checking readiness... attempt ${retryCount + 1}`);
+      console.log('Checking if ready to initialize map...');
       
-      if (retryCount >= maxRetries) {
-        console.error('Max retries reached');
-        setError('Failed to load Google Maps after multiple attempts');
-        setIsLoading(false);
+      if (!window.google || !window.google.maps) {
+        console.log('Google Maps API not ready, waiting...');
+        setTimeout(checkAndInitialize, 100);
         return;
       }
-
-      if (window.google && window.google.maps && mapRef.current) {
-        console.log('Both Google Maps API and DOM element are ready');
-        initializeMap();
-      } else {
-        console.log('Still waiting...', {
-          googleMaps: !!window.google?.maps,
-          domElement: !!mapRef.current
-        });
-        retryCount++;
+      
+      if (!mapRef.current) {
+        console.log('DOM element not ready, waiting...');
         setTimeout(checkAndInitialize, 100);
+        return;
       }
+      
+      console.log('Both Google Maps API and DOM element are ready');
+      initializeMap();
     };
 
-    // Start checking
-    checkAndInitialize();
+    // Use a longer delay to ensure the modal is fully rendered
+    const timeoutId = setTimeout(checkAndInitialize, 200);
+    
+    return () => clearTimeout(timeoutId);
   }, []);
 
   // Update map center when it changes
