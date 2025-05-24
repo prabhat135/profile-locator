@@ -187,7 +187,7 @@ const Index = () => {
                 <MapPin className="h-5 w-5 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">ProfileMapper</h1>
+                <h1 className="text-2xl font-bold text-gray-900">Profile-Locator</h1>
                 <p className="text-sm text-gray-500">Explore profiles and locations</p>
               </div>
             </div>
